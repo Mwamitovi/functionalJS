@@ -1,0 +1,4 @@
+# .gitignore
+
+# front-end packages
+node_modules/
