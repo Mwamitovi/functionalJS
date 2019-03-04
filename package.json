@@ -1,0 +1,20 @@
+{
+  "name": "learn-functionalJS",
+  "version": "1.0.0",
+  "description": "Functional lib and examples in ES6",
+  "main": "index.js",
+  "scripts": {
+    "babel": "babel --presets=@babel/env js/simpleFn.js -o build/script-compiled.js",
+    "playground": "nodemon --exec babel-node playground/play.js --presets=@babel/env",
+    "start": "http-server"
+  },
+  "author": "Mwami Tovi <matovu.synergy@gmail.com>",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.2.3",
+    "@babel/core": "^7.3.4",
+    "@babel/node": "^7.2.2",
+    "@babel/preset-env": "^7.3.4",
+    "nodemon": "^1.18.10"
+  }
+}
