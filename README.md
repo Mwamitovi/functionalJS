@@ -1,6 +1,6 @@
 
-A functional JavaScript library (based on Node.js)
-==================================================
+A Node project to build functional JS library
+=============================================
 
 ## SYNOPSIS
 
