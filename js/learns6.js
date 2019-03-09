@@ -6,6 +6,17 @@ const forEach = (array, fn) => {
 
 export default forEach
 
+const every = (arr, fn) => {
+	// checks if all array elements 
+	// evaluate to true by the passed function
+	let result = true;
+	for(const value of arr)
+		// ES6 'for-of' loop iterates array elements
+		// It abstracts the traversing of the array
+		result = result && fn(value)
+	return result
+}
+
 const some = (arr,fn) => {
 	// the opposite of the every function
 	// checks if 'any' of the array elements 
