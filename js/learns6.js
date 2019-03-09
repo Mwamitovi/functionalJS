@@ -30,21 +30,5 @@ const times = (times, fn) => {
 		fn(i);
 }
 
-const every = (arr, fn) => {
-	// checks if all array elements 
-	// evaluate to true by the passed function
-	let result = true;
-	for(const value of arr)
-		// ES6 'for-of' loop iterates array elements
-		// It abstracts the traversing of the array
-		result = result && fn(value)
-	return result
-}
 
-const some = (arr,fn) => {
-	let result = false;
-	for(const value of arr)
-		result = result || fn(value)
-	return result
-}
 
