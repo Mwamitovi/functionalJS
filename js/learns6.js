@@ -63,3 +63,11 @@ const reduce = (array,fn,initialValue) => {
             accumulator = fn(accumulator,value)
     return [accumulator]
 }
+
+const zip = (leftArr,rightArr,fn) => {
+	// merge two arrays
+	let index, results = [];
+	for(index = 0; index < Math.min(leftArr.length, rightArr.length); index++)
+		results.push(fn(leftArr[index], rightArr[index]));
+	return results;
+}
