@@ -29,3 +29,7 @@ let match = curry(function(expr, str) {
 	return str.match(expr);
 });
 
+let filter = curry(function(f, ary) {
+	// A curried function that filters args
+	return ary.filter(f);
+});
