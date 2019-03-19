@@ -38,3 +38,8 @@ let filter = curry(function(f, ary) {
 let hasNumber = match(/[0-9]+/)
 // find numbers in an array
 let findNumbersInArray = filter(hasNumber)
+
+let map = curry(function(f, ary) {
+	// A curried function that returns transformed array
+	return ary.map(f);
+});
