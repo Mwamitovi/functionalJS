@@ -43,3 +43,6 @@ let map = curry(function(f, ary) {
 	// A curried function that returns transformed array
 	return ary.map(f);
 });
+
+// A curried function to square all array elements
+let squareAll = map((x) => x * x)
