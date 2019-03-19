@@ -22,3 +22,10 @@ let curry = (fn) => {
 		return fn.apply(null, args);
    };
 };
+
+
+let match = curry(function(expr, str) {
+	// A curried function that matches given args
+	return str.match(expr);
+});
+
