@@ -33,3 +33,8 @@ let filter = curry(function(f, ary) {
 	// A curried function that filters args
 	return ary.filter(f);
 });
+
+// find if args have numbers
+let hasNumber = match(/[0-9]+/)
+// find numbers in an array
+let findNumbersInArray = filter(hasNumber)
