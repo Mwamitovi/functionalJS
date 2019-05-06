@@ -5,6 +5,7 @@ const forEach = (array, fn) => {
 }
 
 export default forEach
+import {arrayUtils} from '..js/arrayES6'
 
 /**
  * @see Functor
@@ -53,3 +54,41 @@ MayBe.prototype.map = function(fn) {
 	return this.isNothing() ? MayBe.of(null) : MayBe.of(fn(this.value));
 };
 
+/**
+ * Real world application of MayBe()
+ * Since MayBe() is a type of container() that can hold any values,
+ * it can also hold values of type "Array"
+ * 
+ * Imagine you have written an API to get the top 10 news posts based on types like "top", "latest", "hot"
+ */
+let getTopPosts = (type) => {
+	let response;
+	try {
+		response = JSON.parse(
+			request('GET',"https://www.dailymonitor.co.ug/news/" + type + ".json?limit=10").getBody('utf8')
+		)
+	} catch(err) {
+		response = { message: "Something went wrong", errorCode: err['statusCode']}
+	}
+	return response;
+}
+
+// Using MayBe() to get the Top 10 posts
+let getTopTenPosts = (type) => {
+	let response = getTopPosts(type);
+	return MayBe.of(
+		response).map((arr) => arr['data'])
+				 .map((arr) => arr['children'])
+				 .map((arr) => arrayUtils.map(arr,	// imported, from previous
+					(x) => {
+						return {
+							title: x['data'].title,
+							url: x['data'].url
+						}
+					}
+				 ))
+				 
+}
+
+// We can call our function with a valid daily monitor name like "latest"
+getTopTenPosts('latest')
