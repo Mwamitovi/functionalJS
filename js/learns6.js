@@ -6,8 +6,13 @@ const forEach = (array, fn) => {
 
 export default forEach
 
+/**
+ * @see Functor
+ * Is a plain object/class that implements the map() function while running
+ * over each value in the object to produce a new object.
+ */
 const Container = function(val){
-	// simple func to hold any value passed into it
+	// simple function to hold any value passed into it
 	this.value = val;
 }
 
@@ -21,4 +26,30 @@ Container.of = function(value){
 // on the value being held within the Container
 Container.prototype.map = function(fn){
 	return Container.of(fn(this.value));
+};
+
+
+/**
+ * @see MayBe()
+ * A functor that allows us to handle errors in our code in a more functional way.
+ */
+// declaring the functor object
+const MayBe = function(val) {
+	this.value = val;
 }
+
+// of() method, a pointer functor, returns instance of object
+MayBe.of = function(val) {
+	return new MayBe(val);
+}
+
+// isNothing() method, returns boolean true/false
+MayBe.prototype.isNothing = function() {
+	return (this.value === null || this.value === undefined);
+};
+
+// map() method, returns 
+MayBe.prototype.map = function(fn) {
+	return this.isNothing() ? MayBe.of(null) : MayBe.of(fn(this.value));
+};
+
