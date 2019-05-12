@@ -1,50 +1,144 @@
-const forEach = (array, fn) => {
-	// traverses an array	
-   	let i;
-	for(i=0; i<array.length; i++)
-	   fn(array[i]) 
+
+import {Container,MayBe,arrayUtils,Some,Nothing} from '../lib/es6-functional.js'
+
+var request = require('sync-request');
+
+
+let searchReddit = (search) => {
+    let response  
+    try{
+       response = JSON.parse(request('GET',"https://www.reddit.com/search.json?q=" + encodeURI(search) + "&limit=2").getBody('utf8'))
+    }catch(err) {
+        response = { message: "Something went wrong" , errorCode: err['statusCode'] }
+    }
+    return response
 }
 
-export default forEach
+let getComments = (link) => {
+    let response
+    try {
+        console.log("https://www.reddit.com/" + link)
+        response = JSON.parse(request('GET',"https://www.reddit.com/" + link).getBody('utf8'))
+    } catch(err) {
+        console.log(err)
+        response = { message: "Something went wrong" , errorCode: err['statusCode'] }
+    }
 
-const forEachObject = (obj,fn) => {
-	// traverses object using an algorithm
-	for(var property in obj) {
-    	if(obj.hasOwnProperty(property)) {
-        	// calls the fn with key and value as its argument
-        	fn(property, obj[property])
-    	}
-	}
+    return response 
 }
 
-const unless = (predict,fn) => {
-	// takes a prediction, and if false, calls the fn
-    if(!predict)
-    	fn()
+let mergeTitleAndComments = (searchMayBe,commentsMayBe) => {
+    searchMayBe.map((value) => {
+        commentsMayBe.map((commentsValue) => {
+            console.log(value)
+            console.log(commentsValue)
+        })
+    })
 }
 
-const times = (times, fn) => {
-	// takes a number and calls the passed function 
-	// as many times as the caller stated
-	for (var i = 0; i < times; i++)
-		fn(i);
+let mergeViaMayBe = (searchText) => {
+    let redditMayBe = MayBe.of(searchReddit(searchText))
+    let ans = redditMayBe
+               .map((arr) => arr['data'])
+               .map((arr) => arr['children'])
+               .map((arr) => arrayUtils.map(arr,(x) => {
+                        return {
+                            title : x['data'].title,
+                            permalink : x['data'].permalink
+                        }
+                    } 
+                ))
+               .map((obj) => arrayUtils.map(obj, (x) => {
+                    return {
+                        title: x.title,
+                       comments: MayBe.of(getComments(x.permalink.replace("?ref=search_posts",".json")))
+                    }
+               }))
+
+   return ans;
 }
 
-const every = (arr, fn) => {
-	// checks if all array elements 
-	// evaluate to true by the passed function
-	let result = true;
-	for(const value of arr)
-		// ES6 'for-of' loop iterates array elements
-		// It abstracts the traversing of the array
-		result = result && fn(value)
-	return result
+
+let mergeViaJoin = (searchText) => {
+    let redditMayBe = MayBe.of(searchReddit(searchText))
+    let ans = redditMayBe.map((arr) => arr['data'])
+               .map((arr) => arr['children'])
+               .map((arr) => arrayUtils.map(arr,(x) => {
+                        return {
+                            title : x['data'].title,
+                            permalink : x['data'].permalink
+                        }
+                    } 
+                ))
+               .map((obj) => arrayUtils.map(obj, (x) => {
+                    return {
+                        title: x.title,
+                       comments: MayBe.of(getComments(x.permalink.replace("?ref=search_posts",".json"))).join()
+                    }
+               }))
+               .join()
+
+   return ans;
 }
 
-const some = (arr,fn) => {
-	let result = false;
-	for(const value of arr)
-		result = result || fn(value)
-	return result
+let answer;
+answer = mergeViaMayBe("functional programming")
+
+console.log(answer)
+
+// Via MayBe functor 
+/*
+    See how deep we map to get the answers
+*/
+answer.map((result) => {
+    arrayUtils.map(result,(mergeResults) => {
+        mergeResults.comments.map(comment => {
+            console.log(comment)
+        })
+    }) 
+})
+
+//simple examples of join
+let joinExample = MayBe.of(MayBe.of(5))
+console.log("Without Join Example",joinExample.map((outsideMayBe) => {
+    return outsideMayBe.map((x) => x + 4)
+}))
+console.log("Join Example",joinExample.join().map((v) => v + 4))
+
+//trying our old problem with join
+answer = mergeViaJoin("functional programming")
+
+console.log(answer)
+
+arrayUtils.map(answer,a => {
+    console.log(a.comments)
+})
+
+
+let mergeViaChain = (searchText) => {
+    let redditMayBe = MayBe.of(searchReddit(searchText))
+    let ans = redditMayBe.map((arr) => arr['data'])
+               .map((arr) => arr['children'])
+               .map((arr) => arrayUtils.map(arr,(x) => {
+                        return {
+                            title : x['data'].title,
+                            permalink : x['data'].permalink
+                        }
+                    } 
+                ))
+               .chain((obj) => arrayUtils.map(obj, (x) => {
+                    return {
+                       title: x.title,
+                       comments: MayBe.of(getComments(x.permalink.replace("?ref=search_posts",".json"))).chain(x => {
+                            return x.length
+                       })
+                    }
+               }))
+
+   return ans;
 }
 
+//trying our old problem with chain
+answer = mergeViaChain("functional programming")
+
+console.log(answer)
