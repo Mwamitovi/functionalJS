@@ -1,5 +1,5 @@
 
-import {Container,MayBe,arrayUtils,Some,Nothing} from '../lib/es6-functional.js'
+import {Container,MayBe,arrayUtils,Some,Nothing} from '../lib/es6-functions.js'
 
 var request = require('sync-request');
 
