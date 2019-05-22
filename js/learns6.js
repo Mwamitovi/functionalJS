@@ -1,7 +1,8 @@
 const forEach = (array, fn) => {
-   let i;
-   for(i=0; i<array.length; i++)
-        fn(array[i]) 
+	// traverses an array	
+   	let i;
+	for(i=0; i<array.length; i++)
+	   fn(array[i]) 
 }
 
 const forEachObject = (obj,fn) => {
