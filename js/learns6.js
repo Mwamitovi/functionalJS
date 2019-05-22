@@ -5,9 +5,6 @@ const forEach = (array, fn) => {
 	   fn(array[i]) 
 }
 
-export default forEach
-
-
 const tap = (value) => {
 	// takes a value and returns a function having a closure over value
     (fn) => (
@@ -40,3 +37,5 @@ const memoize = (fn) => {
 	const lookupTable = {};
 	return (arg) => lookupTable[arg] || (lookupTable[arg] = fn(arg));
 }
+
+export {forEach, tap, unary, once, memoize }
