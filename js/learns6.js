@@ -61,53 +61,39 @@ const sortBy = (property) => {
 	}
 }
 
-const arrayUtils = {
-	map : map
-}
+const curryN = (fn) => {
+	// converts a function with 'n' number of args into a nested unary()
+	if(typeof fn!=='function'){
+		 throw Error('No function provided');
+	}
+	return function curriedFn(...args){
+		if(args.length < fn.length){
+			return function(){
+				return curriedFn.apply(
+					null, args.concat( [].slice.call(arguments) )
+				);
+			};
+		}
+		return fn.apply(null, args);
+   };
+};
 
-export {arrayUtils}
-// To use arrayUtils within another file,
-// statement - import arrayUtils from 'lib'
-// to use map(), just call `arrayUtils.map` 
-// or  declare `const map = arrayUtils.map`, then call `map`
 
-const filter = (array,fn) => {
-	// returns an array of values that pass a condition
-	let results = []
-	for(const value of array)
-		(fn(value)) ? results.push(value) : undefined
-	return results;
-}
+const match = curryN(function(expr, str) {
+	// A curried function that matches given args
+	return str.match(expr);
+});
 
-const concatAll = (array,fn) => {
-	// concatenates all nested arrays into a single array
-	let results = []
-	for(const value of array)
-		results.push.apply(results, value);
-	return results;
-}
+const filter = curryN(function(f, ary) {
+	// A curried function that filters args
+	return ary.filter(f);
+});
 
-const reduce = (array,fn,initialValue) => {
-	// implements the power of reducing functions
-    let accumulator;
-    if(initialValue != undefined)
-        accumulator = initialValue;
-    else
-        accumulator = array[0];
+// find if args have numbers
+const hasNumber = match(/[0-9]+/)
 
-	if(initialValue === undefined)
-		// if initialValue is undefined,
-		// we start looping the array from the second element, array[1], 
-		// because array[0] becomes the initialValue for accumulator
-        for(let i=1; i<array.length; i++)
-            accumulator = fn(accumulator,array[i])
-	else
-		// If the initialValue is passed by the caller, 
-		// then we start to iterate the full array.
-        for(const value of array)
-            accumulator = fn(accumulator,value)
-    return [accumulator]
-}
+// find numbers in an array
+const findNumbersInArray = filter(hasNumber)
 
 const memorize = (fn) => {
 	// for functions that take up one argument
