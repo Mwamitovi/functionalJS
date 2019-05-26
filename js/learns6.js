@@ -32,15 +32,27 @@ const every = (arr,fn) => {
 }
 */
 
-const every = (arr, fn) => {
-	// checks if all array elements 
-	// evaluate to true by the passed function
-	let result = true;
-	for(const value of arr)
-		// ES6 'for-of' loop iterates array elements
-		// It abstracts the traversing of the array
-		result = result && fn(value)
-	return result
+
+let mergeViaJoin = (searchText) => {
+    let redditMayBe = MayBe.of(searchReddit(searchText))
+    let ans = redditMayBe.map((arr) => arr['data'])
+               .map((arr) => arr['children'])
+               .map((arr) => arrayUtils.map(arr,(x) => {
+                        return {
+                            title : x['data'].title,
+                            permalink : x['data'].permalink
+                        }
+                    } 
+                ))
+               .map((obj) => arrayUtils.map(obj, (x) => {
+                    return {
+                        title: x.title,
+                       comments: MayBe.of(getComments(x.permalink.replace("?ref=search_posts",".json"))).join()
+                    }
+               }))
+               .join()
+
+   return ans;
 }
 
 const some = (arr,fn) => {
