@@ -1,7 +1,8 @@
+
 const forEach = (array, fn) => {
 	// traverses an array	
 	for(const value of array)
-	   fn(value) 
+		fn(value)
 }
 
 const forEachObject = (obj,fn) => {
@@ -66,34 +67,37 @@ const curryN = (fn) => {
 	if(typeof fn!=='function'){
 		 throw Error('No function provided');
 	}
-	return function curriedFn(...args){
-		if(args.length < fn.length){
-			return function(){
-				return curriedFn.apply(
-					null, args.concat( [].slice.call(arguments) )
-				);
-			};
-		}
-		return fn.apply(null, args);
-   };
-};
 
+// Split words into an array, along the spaces
+let splitIntoSpaces = (str) => str.split(" ")
 
-const match = curryN(function(expr, str) {
-	// A curried function that matches given args
-	return str.match(expr);
-});
+// Returns the total no. of array elements
+let count = (array) => array.length
 
-const filter = curryN(function(f, ary) {
-	// A curried function that filters args
-	return ary.filter(f);
-});
+// A composite function that counts
+// the number of words in a string
+const countWords = compose(count, splitIntoSpaces)
 
-// find if args have numbers
-const hasNumber = match(/[0-9]+/)
+const composeN = (...fns) =>
+	// Mutates from the compose() and handles 'n' functions
+	// Feeding output as 'argument' to the next function
+	(value) => {
+		reduce(fns.reverse(), (acc,fn) => fn(acc), value)
+	}
 
-// find numbers in an array
-const findNumbersInArray = filter(hasNumber)
+// Returns if argument is even(true) or odd(false)
+let oddOrEven = (ip) => ip % 2 == 0 ? "even" : "odd"
+
+// Returns 'even' or 'odd' after evaluating total word count
+// Using composeN(), evaluates from right -> left
+const oddOrEvenWords = composeN(oddOrEven, count, splitIntoSpaces)
+
+const pipe = (...fns) =>
+	// Works just like composeN() but with opposite direction
+	// data flow is from left to right (sequential)
+	(value) => {
+		reduce(fns, (acc,fn) => fn(acc), value);
+	}
 
 const memorize = (fn) => {
 	// for functions that take up one argument
