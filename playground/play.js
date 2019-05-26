@@ -1,7 +1,7 @@
 import {
     forEach, forEachObject, unless, times, every, some, sortBy, tap, unary, 
     once, memorize, arrayUtils, curry, curryN, partial, composeN, pipe,
-    some, Nothing
+    Container, Some, Nothing
 } from '../js/learns6'
 
 var array = [1,2,3]
@@ -647,5 +647,145 @@ let getTopTenPostsDataEither = (type) => {
 }
 
 // Calling the Either (Some or Nothing) functor
-console.log("Correct reddit type ",getTopTenPostsDataEither('hot'))
-console.log("Wrong reddit type ",getTopTenPoststDataEither('new2'))
+console.log("Correct 'daily-monitor' type ",getTopTenPostsDataEither('hot'))
+console.log("Wrong 'daily-monitor' type ",getTopTenPoststDataEither('new2'))
+
+
+let searchMonitor = (search) => {
+    let response  
+    try{
+       response = JSON.parse(request('GET',"https://www.dailymonitor.co.ug/search.json?q=" + encodeURI(search) + "&limit=2").getBody('utf8'))
+    }catch(err) {
+        response = { message: "Something went wrong" , errorCode: err['statusCode'] }
+    }
+    return response
+}
+
+let getComments = (link) => {
+    let response
+    try {
+        console.log("https://www.dailymonitor.co.ug/" + link)
+        response = JSON.parse(request('GET',"https://www.dailymonitor.co.ug/" + link).getBody('utf8'))
+    } catch(err) {
+        console.log(err)
+        response = { message: "Something went wrong" , errorCode: err['statusCode'] }
+    }
+
+    return response 
+}
+
+let mergeTitleAndComments = (searchMayBe, commentsMayBe) => {
+    searchMayBe.map((value) => {
+        commentsMayBe.map((commentsValue) => {
+            console.log(value)
+            console.log(commentsValue)
+        })
+    })
+}
+
+let mergeViaMayBe = (searchText) => {
+    let monitorMayBe = MayBe.of(searchMonitor(searchText))
+    let ans = monitorMayBe
+               .map((arr) => arr['data'])
+               .map((arr) => arr['children'])
+               .map((arr) => arrayUtils.map(arr,(x) => {
+                        return {
+                            title : x['data'].title,
+                            permalink : x['data'].permalink
+                        }
+                    } 
+                ))
+               .map((obj) => arrayUtils.map(obj, (x) => {
+                    return {
+                        title: x.title,
+                       comments: MayBe.of(getComments(x.permalink.replace("?ref=search_posts",".json")))
+                    }
+               }))
+   return ans;
+}
+
+
+let mergeViaJoin = (searchText) => {
+    let monitorMayBe = MayBe.of(searchMonitor(searchText))
+    let ans = monitorMayBe.map((arr) => arr['data'])
+               .map((arr) => arr['children'])
+               .map((arr) => arrayUtils.map(arr,(x) => {
+                        return {
+                            title : x['data'].title,
+                            permalink : x['data'].permalink
+                        }
+                    } 
+                ))
+               .map((obj) => arrayUtils.map(obj, (x) => {
+                    return {
+                        title: x.title,
+                       comments: MayBe.of(getComments(x.permalink.replace("?ref=search_posts",".json"))).join()
+                    }
+               }))
+               .join()
+   return ans;
+}
+
+let answer;
+answer = mergeViaMayBe("functional programming")
+
+console.log(answer)
+
+// Via MayBe functor 
+/* See how deep we map to get the answers
+*/
+answer.map((result) => {
+    arrayUtils.map(result, (mergeResults) => {
+        mergeResults.comments.map(comment => {
+            console.log(comment)
+        })
+    }) 
+})
+
+
+//simple examples of join
+let joinExample = MayBe.of(MayBe.of(5))
+console.log("Without Join Example", joinExample.map((outsideMayBe) => {
+    return outsideMayBe.map((x) => x + 4)
+}))
+
+console.log("Join Example", joinExample.join().map((v) => v + 4))
+
+
+//trying our old problem with join
+answer = mergeViaJoin("functional programming")
+
+console.log(answer)
+
+arrayUtils.map(answer,a => {
+    console.log(a.comments)
+})
+
+
+let mergeViaChain = (searchText) => {
+    let monitorMayBe = MayBe.of(searchMonitor(searchText))
+    let ans = monitorMayBe.map((arr) => arr['data'])
+               .map((arr) => arr['children'])
+               .map((arr) => arrayUtils.map(arr,(x) => {
+                        return {
+                            title : x['data'].title,
+                            permalink : x['data'].permalink
+                        }
+                    } 
+                ))
+               .chain((obj) => arrayUtils.map(obj, (x) => {
+                    return {
+                       title: x.title,
+                       comments: MayBe.of(getComments(x.permalink.replace("?ref=search_posts",".json"))).chain(x => {
+                            return x.length
+                       })
+                    }
+               }))
+
+   return ans;
+}
+
+//trying our old problem with chain
+answer = mergeViaChain("functional programming")
+
+console.log(answer)
