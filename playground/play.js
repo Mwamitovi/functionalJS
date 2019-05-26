@@ -1,6 +1,6 @@
 import {
     forEach, forEachObject, unless, times, every, some, sortBy, tap, unary, 
-    once, memorize, arrayUtils, curry, curryN, partial
+    once, memorize, arrayUtils, curry, curryN, partial, composeN, pipe
 } from '../js/learns6'
 
 var array = [1,2,3]
@@ -163,6 +163,34 @@ console.log("Good Rated books", map(goodRatingBooks, (book) => {
     return {title: book.title, author:book.author}
 }))
 
+console.log("Query result", map(filter(bugandaBooks, (book) => book.rating[0] > 4.5), (book) => {
+    return {title: book.title, author:book.author}
+}))
+
+
+//util functions
+let filterOutStandingBooks = (book) => book.rating[0] === 5;
+let filterGoodBooks = (book) =>  book.rating[0] > 4.5;
+let filterBadBooks = (book) => book.rating[0] < 3.5;
+
+let projectTitleAndAuthor = (book) => { return {title: book.title, author: book.author} }
+let projectAuthor = (book) => { return {author: book.author}  }
+let projectTitle = (book) => { return {title: book.title} }
+
+//compose new function. 
+let queryGoodBooks = partial(filter, undefined, filterGoodBooks);
+let mapTitleAndAuthor = partial(map, undefined, projectTitleAndAuthor)
+
+let titleAndAuthorForGoodBooks = compose(mapTitleAndAuthor, queryGoodBooks)
+
+console.log("Good book title and author via compose", titleAndAuthorForGoodBooks(bugandaBooks))
+
+//compose other new functions
+let mapTitle = partial(map, undefined, projectTitle)
+let titleForGoodBooks = compose(mapTitle, queryGoodBooks)
+
+console.log("Good book title", titleForGoodBooks(bugandaBooks))
+
 
 // modified data structure with more details
 let bugandaBooks2 = [
@@ -234,12 +262,9 @@ console.log("Result using map, filter, concatAll",
 )
 
 
-console.log("Sum of the array",
-reduce([1,2,3,4,5], (acc, val) => acc + val, 0))
+console.log("Sum of the array", reduce([1,2,3,4,5], (acc, val) => acc + val, 0))
 
-
-console.log("Product of the array",
-reduce([1,2,3,4,5], (acc, val) => acc * val, 1))
+console.log("Product of the array", reduce([1,2,3,4,5], (acc, val) => acc * val, 1))
 
 
 let bookDetails = concatAll(
@@ -302,22 +327,22 @@ let bugandaBooks3 = [
 
 // data structure contains separate "Review" details
 let reviewDetails = [
-  {
-    "id": 111,
-    "reviews": [{good : 4 , excellent : 12}]
-  },
-  {
-    "id" : 222,
-    "reviews" : []
-  },
-  {
-    "id" : 333,
-    "reviews" : []
-  },
-  {
-    "id" : 444,
-    "reviews": [{good : 14 , excellent : 12}]
-  }
+    {
+        "id": 111,
+        "reviews": [{good : 4 , excellent : 12}]
+    },
+    {
+        "id" : 222,
+        "reviews" : []
+    },
+    {
+        "id" : 333,
+        "reviews" : []
+    },
+    {
+        "id" : 444,
+        "reviews": [{good : 14 , excellent : 12}]
+    }
 ]
 
 
@@ -438,3 +463,61 @@ delayTenMsPartial(() => console.log("Do Y . . . . task"))
 
 let prettyPrintJson = partial(JSON.stringify, undefined, null, 2)
 console.log("JSON pretty print via partial", prettyPrintJson({foo: "bar", bar: "foo"}))
+
+
+const compose = (a, b) =>
+	// Takes output from a function, and then feeds
+	// that output as an argument to another function
+	// Works with two functions only, from right to left
+    (c) => { 
+        return a(b(c)); 
+    }
+
+// round-off
+let number = compose(Math.round, parseFloat)
+
+console.log("Number is ", number("3.56"))
+
+// Split words into an array, along the spaces
+let splitIntoSpaces = (str) => str.split(" ")
+
+// Returns the total no. of array elements
+let count = (array) => array.length
+
+// A composite function that counts
+// the number of words in a string
+const countWords = compose(count, splitIntoSpaces);
+
+console.log("Counting words for", countWords("hello your reading about composition"));
+
+
+// Returns if argument is even(true) or odd(false)
+let oddOrEven = (ip) => ip % 2 == 0 ? "even" : "odd"
+
+// Returns 'even' or 'odd' after evaluating total word count
+// Using composeN(), evaluates from right -> left
+const oddOrEvenWords = composeN(oddOrEven, count, splitIntoSpaces)
+
+console.log("Even or odd via compose ?", oddOrEvenWords("hello your reading about composition"))
+
+//using pipes as data flow
+// Returns 'even' or 'odd' after evalutaing total word count
+// Using the pipe(), evaluates from left -> right
+oddOrEvenWords = pipe(splitIntoSpaces, count, oddOrEven);
+console.log("Even or odd via pipe ?", oddOrEvenWords("hello your reading about composition"))
+
+let associativeCheckL = composeN(composeN(oddOrEven, count), splitIntoSpaces)
+console.log("Associative check L", associativeCheckL("hello your reading about composition"))
+
+let associativeCheckR = composeN(oddOrEven, composeN(count, splitIntoSpaces))
+console.log("Associative check R", associativeCheckR("hello your reading about composition"))
+
+
+const identity = (it) => {
+	// prints it's input argument
+	// Helpful in debugging compose functions
+	console.log(it);
+	return it
+}
+
+console.log("Debugging", compose(oddOrEven, count, identity, splitIntoSpaces)("Test string"))
