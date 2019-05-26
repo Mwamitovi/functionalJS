@@ -208,6 +208,22 @@ const partial = function (fn,...partialArgs){
 };
 
 
+const composeN = (...fns) =>
+	// Mutates from the compose() and handles 'n' functions
+	// Feeding output as 'argument' to the next function
+	(value) => {
+		reduce(fns.reverse(), (acc, fn) => fn(acc), value)
+	}
+
+
+const pipe = (...fns) =>
+	// Works just like composeN() but with opposite direction
+	// data flow is from left to right (sequential)
+	(value) => {
+		reduce(fns, (acc,fn) => fn(acc), value);
+	}
+
+
 export {
 	forEach, 
 	forEachObject, 
@@ -223,5 +239,7 @@ export {
 	arrayUtils,
 	curry,
 	curryN,
-	partial
+	partial,
+	composeN,
+	pipe
 }
