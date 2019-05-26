@@ -1,6 +1,7 @@
 import {
     forEach, forEachObject, unless, times, every, some, sortBy, tap, unary, 
-    once, memorize, arrayUtils, curry, curryN, partial, composeN, pipe
+    once, memorize, arrayUtils, curry, curryN, partial, composeN, pipe,
+    some, Nothing
 } from '../js/learns6'
 
 var array = [1,2,3]
@@ -521,3 +522,130 @@ const identity = (it) => {
 }
 
 console.log("Debugging", compose(oddOrEven, count, identity, splitIntoSpaces)("Test string"))
+
+
+var request = require('sync-request');
+
+
+//using bare new keyword
+console.log("Container using bare new keyword")
+let testValue = new Container(3)
+console.log("Value inside container",testValue)
+
+let testObj = new Container({a:1})
+console.log("Object inside container",testObj)
+
+let testArray = new Container([1,2])
+console.log("Array inside container",testArray)
+
+
+//using `of` method
+console.log("\n\nContainer using `of` util method")
+testValue = Container.of(3)
+console.log("Value inside container",testValue)
+
+testObj = Container.of({a:1})
+console.log("Object inside container",testObj)
+
+testArray = Container.of([1,2])
+console.log("Array inside container",testArray)
+
+console.log("Nested conatiner",Container.of(Container.of(3)))
+
+
+let double = (x) => x + x;
+console.log("Double container",Container.of(3).map(double));
+
+console.log("May Be Example", MayBe.of("string").map((x) => x.toUpperCase()))
+console.log("May Be null example", MayBe.of(null).map((x) => x.toUpperCase()))
+console.log("MayBe chaining", MayBe.of("George")
+     .map((x) => x.toUpperCase())
+     .map((x) => "Mr. " + x))
+
+console.log("MayBe chaining null",
+    MayBe.of("George")
+     .map(() => undefined)
+     .map((x) => "Mr. " + x))
+
+
+/**
+ * Real world application of MayBe()
+ * Since MayBe() is a type of container() that can hold any values,
+ * it can also hold values of type "Array"
+ * 
+ * Imagine you have written an API to get the top 10 news posts based on types like "top", "latest", "hot"
+ */
+let getTopTenPosts = (type) => {
+	let response;
+	try {
+		response = JSON.parse(
+			request('GET',"https://www.dailymonitor.co.ug/news/" + type + ".json?limit=10").getBody('utf8')
+		)
+	} catch(err) {
+		response = { message: "Something went wrong", errorCode: err['statusCode']}
+	}
+	return response;
+};
+
+// Using MayBe() to get the Top 10 posts
+let getTopTenPostsData = (type) => {
+	let response = getTopTenPosts(type);
+	return MayBe.of(
+		response).map((arr) => arr['data'])
+				 .map((arr) => arr['children'])
+				 .map((arr) => arrayUtils.map(arr,	// imported, from previous
+					(x) => {
+						return {
+							title: x['data'].title,
+							url: x['data'].url
+						}
+					}
+				 ))
+				 
+};
+
+// We can call our function with a valid daily monitor name like "latest"
+console.log("Proper 'daily-monitor' type", getTopTenPostsData('latest'))
+console.log("Wrong 'daily-monitor' type", getTopTenPostsData('late'))
+
+console.log("\nEither example\n")
+console.log("Something example", Some.of("test").map((x) => x.toUpperCase()))
+console.log("Nothing example", Nothing.of("test").map((x) => x.toUpperCase()))
+
+
+/**
+ * Real world application of Either (Some or Nothing)
+ * 
+ * The API example, using Either, to get the "top", "latest", "hot" news.
+ */
+let getTopTenPostsEither = (type) => {
+	let response;
+	try {
+		response = Some.of(JSON.parse(
+			request('GET',"https://www.dailymonitor.co.ug/news/" + type + ".json?limit=10").getBody('utf8')
+		))
+	} catch(err) {
+		response = Nothing.of(
+			{ message: "Something went wrong", errorCode: err['statusCode'] }
+		)
+	}
+	return response;
+}
+
+let getTopTenPostsDataEither = (type) => {
+	let response = getTopTenPostsEither(type);
+	return response.map((arr) => arr['data'])
+				   .map((arr) => arr['children'])	
+				   .map((arr) => arrayUtils.map(arr,
+						(x) => {
+							return {
+								title: x['data'].title,
+								url: x['data'].url
+							}
+						}
+					))	
+}
+
+// Calling the Either (Some or Nothing) functor
+console.log("Correct reddit type ",getTopTenPostsDataEither('hot'))
+console.log("Wrong reddit type ",getTopTenPoststDataEither('new2'))
