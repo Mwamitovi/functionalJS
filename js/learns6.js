@@ -68,36 +68,94 @@ const curryN = (fn) => {
 		 throw Error('No function provided');
 	}
 
-// Split words into an array, along the spaces
-let splitIntoSpaces = (str) => str.split(" ")
+// utility method to abstract (saves us) writing the 'new' keyword
+// whenever we create a new Container.
+Container.of = function(value){
+	return new Container(value);
+};
 
-// Returns the total no. of array elements
-let count = (array) => array.length
+// method allows us to call any function 
+// on the value being held within the Container
+Container.prototype.map = function(fn){
+	return Container.of(fn(this.value));
+};
 
-// A composite function that counts
-// the number of words in a string
-const countWords = compose(count, splitIntoSpaces)
 
-const composeN = (...fns) =>
-	// Mutates from the compose() and handles 'n' functions
-	// Feeding output as 'argument' to the next function
-	(value) => {
-		reduce(fns.reverse(), (acc,fn) => fn(acc), value)
+/**
+ * @see MayBe()
+ * A functor that allows us to handle errors in our code in a more functional way.
+ */
+// declaring the functor object
+const MayBe = function(val) {
+	this.value = val;
+};
+
+// of() method, a pointer functor, returns instance of object
+MayBe.of = function(val) {
+	return new MayBe(val);
+};
+
+// isNothing() method, returns boolean true/false
+MayBe.prototype.isNothing = function() {
+	return (this.value === null || this.value === undefined);
+};
+
+// map() method, returns 
+MayBe.prototype.map = function(fn) {
+	return this.isNothing() ? MayBe.of(null) : MayBe.of(fn(this.value));
+};
+
+/**
+ * Real world application of MayBe()
+ * Since MayBe() is a type of container() that can hold any values,
+ * it can also hold values of type "Array"
+ * 
+ * Imagine you have written an API to get the top 10 news posts based on types like "top", "latest", "hot"
+ */
+let getTopPosts = (type) => {
+	let response;
+	try {
+		response = JSON.parse(
+			request('GET',"https://www.dailymonitor.co.ug/news/" + type + ".json?limit=10").getBody('utf8')
+		)
+	} catch(err) {
+		response = { message: "Something went wrong", errorCode: err['statusCode']}
 	}
+	return response;
+};
 
-// Returns if argument is even(true) or odd(false)
-let oddOrEven = (ip) => ip % 2 == 0 ? "even" : "odd"
+// Using MayBe() to get the Top 10 posts
+let getTopTenPosts = (type) => {
+	let response = getTopPosts(type);
+	return MayBe.of(
+		response).map((arr) => arr['data'])
+				 .map((arr) => arr['children'])
+				 .map((arr) => arrayUtils.map(arr,	// imported, from previous
+					(x) => {
+						return {
+							title: x['data'].title,
+							url: x['data'].url
+						}
+					}
+				 ))
+				 
+};
 
-// Returns 'even' or 'odd' after evaluating total word count
-// Using composeN(), evaluates from right -> left
-const oddOrEvenWords = composeN(oddOrEven, count, splitIntoSpaces)
+// We can call our function with a valid daily monitor name like "latest"
+getTopTenPosts('latest')
 
-const pipe = (...fns) =>
-	// Works just like composeN() but with opposite direction
-	// data flow is from left to right (sequential)
-	(value) => {
-		reduce(fns, (acc,fn) => fn(acc), value);
-	}
+
+/**
+ * @see Either(), a supertype of Some() and Nothing()
+ * A functor that helps us preserve our "error message" while branching out
+ */
+// defining Either()
+const Either = {
+	Some: Some,
+	Nothing: Nothing
+};
+
+// declaring the parts of the Either() functor object
 
 const memorize = (fn) => {
 	// for functions that take up one argument
